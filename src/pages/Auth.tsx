@@ -5,20 +5,19 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Eye, EyeOff, Building, User as UserIcon } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
-import { authAPI } from '../services/api';
-import type { UserRole } from '../types';
 import { REGISTER_ROLES } from '../types';
+import { mapHttpError } from '../services/api';
 
 
 
 const loginSchema = z.object({
   email: z.string().email('Email inválido'),
-  password: z.string().min(6, 'Mínimo 6 caracteres'),
+  password: z.string().min(1, 'Contraseña requerida'),
 });
 
 const registerSchema = z.object({
   email: z.string().email('Email inválido'),
-  password: z.string().min(6, 'Mínimo 6 caracteres'),
+  password: z.string().min(8, 'Mínimo 8 caracteres'),
   companyName: z.string().min(2, 'Nombre de empresa requerido'),
   nit: z.string().min(7, 'NIT inválido'),
   location: z.string().min(2, 'Debes seleccionar una ciudad'),
@@ -32,17 +31,14 @@ type RegisterForm = z.infer<typeof registerSchema>;
 export const Auth: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { login } = useAuthStore();
+  const { loginWithCredentials, registerWithCredentials } = useAuthStore();
   const [isLogin, setIsLogin] = useState(searchParams.get('mode') !== 'register');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const loginForm = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: 'generador1@example.com',
-      password: '123456',
-    },
+    defaultValues: { email: 'generador1@example.com', password: '123456' },
   });
 
   const registerForm = useForm<RegisterForm>({
@@ -52,11 +48,11 @@ export const Auth: React.FC = () => {
   const handleLogin = async (data: LoginForm) => {
     setIsLoading(true);
     try {
-      const user = await authAPI.login(data.email, data.password);
-      login(user);
-      navigate(user.role === 'GEN' ? '/publish' : '/feed');
+      await loginWithCredentials(data.email, data.password);
+      navigate('/feed');
     } catch (error) {
-      console.error('Login error:', error);
+      const { message } = mapHttpError(error);
+      alert(message);
     } finally {
       setIsLoading(false);
     }
@@ -65,11 +61,18 @@ export const Auth: React.FC = () => {
   const handleRegister = async (data: RegisterForm) => {
     setIsLoading(true);
     try {
-      const user = await authAPI.register(data);
-      login(user);
-      navigate(user.role === 'GEN' ? '/publish' : '/feed');
+      await registerWithCredentials({
+        email: data.email,
+        password: data.password,
+        role_global: data.role,
+        company_id: null,
+        company_name: data.companyName,
+        company_city: data.location,
+      });
+      navigate('/feed');
     } catch (error) {
-      console.error('Register error:', error);
+      const { message } = mapHttpError(error);
+      alert(message);
     } finally {
       setIsLoading(false);
     }

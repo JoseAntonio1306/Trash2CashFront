@@ -1,5 +1,5 @@
 // roles disponibles en la app
-export const USER_ROLES = ['GEN', 'REC', 'ADMIN'] as const;
+export const USER_ROLES = ['GEN', 'REC', 'CARRIER', 'ADMIN'] as const;
 export type UserRole = typeof USER_ROLES[number];
 
 // si en el registro NO quieres permitir ADMIN, define una lista para registro
@@ -9,17 +9,8 @@ export type RegisterRole = typeof REGISTER_ROLES[number];
 // (todo lo demás igual que ya tienes)
 
 
-export interface User {
-  id: string;
-  email: string;
-  role: UserRole;
-  companyName: string;
-  nit: string;
-  location: string;
-  rating?: number;
-  verified: boolean;
-  createdAt: string;
-}
+// Tipos locales antiguos se mantienen sólo si alguna vista los usa.
+// Para auth y entidades, ahora usamos los tipos del OpenAPI desde services/api.
 
 export type MaterialType = 'plastico' | 'carton' | 'chatarra' | 'e-waste' | 'vidrio' | 'papel';
 export type QualityType = 'alta' | 'media' | 'mixta';
